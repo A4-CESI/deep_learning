@@ -1,4 +1,4 @@
-    # Manipulation et analyse de données
+# Manipulation et analyse de données
 pandas>=2.1.0
 numpy>=1.25.0
 scipy>=1.11.0
@@ -22,7 +22,7 @@ keras-tuner>=1.4.0
 # torchaudio>=2.1.0
 
 # IA explicable
-shap>=1.5.1
+shap==0.41.0
 lime>=0.2.2.1
 
 # Sauvegarde de modèles et MLOps
