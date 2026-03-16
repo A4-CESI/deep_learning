@@ -23,7 +23,7 @@ keras-tuner>=1.4.0
 
 # IA explicable
 shap==0.41.0
-lime>=0.2.2.1
+lime==0.2.0.1
 
 # Sauvegarde de modèles et MLOps
 joblib>=1.3.2
