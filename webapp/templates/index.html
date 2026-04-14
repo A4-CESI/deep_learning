@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DiabIA — Analyse du Risque Diabetique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── VARIABLES ─────────────────────────────────────────────────────────── */
+:root {
+  --ink:      #0d1117;
+  --ink2:     #161b22;
+  --ink3:     #21262d;
+  --wire:     #30363d;
+  --mist:     #8b949e;
+  --snow:     #e6edf3;
+  --teal:     #2dd4bf;
+  --teal2:    #0d9488;
+  --coral:    #f87171;
+  --amber:    #fbbf24;
+  --emerald:  #34d399;
+  --r:        12px;
+  --r2:       20px;
+}
+
+/* ── RESET & BASE ─────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: var(--ink);
+  color: var(--snow);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 400;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ── ANIMATED BACKGROUND ─────────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 10%, rgba(45,212,191,.07) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 80%, rgba(13,148,136,.06) 0%, transparent 50%),
+    radial-gradient(ellipse 40% 60% at 50% 50%, rgba(45,212,191,.03) 0%, transparent 70%);
+  pointer-events: none; z-index: 0;
+}
+
+/* ── LAYOUT ──────────────────────────────────────────────────────────── */
+.page { position: relative; z-index: 1; max-width: 1080px; margin: 0 auto; padding: 40px 24px 80px; }
+
+/* ── HEADER ──────────────────────────────────────────────────────────── */
+.header {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  margin-bottom: 48px; padding-bottom: 32px;
+  border-bottom: 1px solid var(--wire);
+  animation: fadeDown .6s ease both;
+}
+.header-left { display: flex; align-items: center; gap: 20px; }
+.logo-mark {
+  width: 52px; height: 52px;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  border-radius: 14px;
+  display: grid; place-items: center;
+  font-size: 26px;
+  box-shadow: 0 0 30px rgba(45,212,191,.25);
+  flex-shrink: 0;
+}
+.header-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 28px; line-height: 1.1;
+  color: var(--snow);
+}
+.header-title em { color: var(--teal); font-style: italic; }
+.header-sub { font-size: 13px; color: var(--mist); margin-top: 4px; }
+.model-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip {
+  background: var(--ink2); border: 1px solid var(--wire);
+  border-radius: 40px; padding: 5px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--mist);
+  display: flex; align-items: center; gap: 6px;
+}
+.chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--emerald); }
+.chip.teal .dot { background: var(--teal); }
+.chip.amber .dot { background: var(--amber); }
+
+/* ── MAIN GRID ────────────────────────────────────────────────────────── */
+.main-grid { display: grid; grid-template-columns: 1fr 380px; gap: 28px; align-items: start; }
+
+/* ── FORM PANEL ──────────────────────────────────────────────────────── */
+.panel {
+  background: var(--ink2); border: 1px solid var(--wire);
+  border-radius: var(--r2); overflow: hidden;
+  animation: fadeUp .7s ease both;
+}
+.panel-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--wire);
+  display: flex; align-items: center; gap: 10px;
+}
+.panel-icon { font-size: 16px; }
+.panel-title {
+  font-size: 13px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--mist);
+}
+.panel-body { padding: 24px; }
+
+/* ── SECTION DIVIDER ─────────────────────────────────────────────────── */
+.section-label {
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--teal); margin-bottom: 14px; margin-top: 24px;
+  padding-left: 10px; border-left: 2px solid var(--teal);
+}
+.section-label:first-child { margin-top: 0; }
+
+/* ── FIELD GROUPS ────────────────────────────────────────────────────── */
+.fields-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+.field {
+  background: var(--ink3); border: 1px solid var(--wire);
+  border-radius: var(--r); padding: 12px 14px;
+  transition: border-color .2s, box-shadow .2s;
+  cursor: pointer;
+}
+.field:focus-within {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(45,212,191,.12);
+}
+.field label {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 11px; font-weight: 500; color: var(--mist);
+  margin-bottom: 8px; cursor: pointer;
+}
+.field label .hint {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--teal); opacity: .7;
+}
+
+/* ── SLIDER ──────────────────────────────────────────────────────────── */
+.slider-wrap { display: flex; align-items: center; gap: 10px; }
+input[type=range] {
+  flex: 1; height: 4px; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+  background: var(--wire); border-radius: 2px; outline: none;
+}
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--teal);
+  box-shadow: 0 0 8px rgba(45,212,191,.5);
+  cursor: pointer; transition: transform .15s;
+}
+input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+.slider-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; font-weight: 500; color: var(--teal);
+  min-width: 36px; text-align: right;
+}
+
+/* ── BINARY TOGGLE ───────────────────────────────────────────────────── */
+.toggle-wrap { display: flex; gap: 6px; }
+.toggle-btn {
+  flex: 1; padding: 8px 4px;
+  background: var(--ink); border: 1px solid var(--wire);
+  border-radius: 8px; color: var(--mist);
+  font-size: 12px; font-weight: 500;
+  cursor: pointer; transition: all .2s; text-align: center;
+}
+.toggle-btn.active {
+  background: var(--teal); border-color: var(--teal);
+  color: var(--ink); box-shadow: 0 0 12px rgba(45,212,191,.3);
+}
+
+/* ── SUBMIT BUTTON ───────────────────────────────────────────────────── */
+.btn-submit {
+  width: 100%; margin-top: 28px; padding: 16px;
+  background: linear-gradient(135deg, var(--teal), var(--teal2));
+  border: none; border-radius: var(--r);
+  color: var(--ink); font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 4px 20px rgba(45,212,191,.3);
+  transition: all .2s;
+}
+.btn-submit:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(45,212,191,.4); }
+.btn-submit:active { transform: translateY(0); }
+.btn-submit .spinner { display: none; }
+.btn-submit.loading .spinner {
+  display: inline-block; width: 16px; height: 16px;
+  border: 2px solid rgba(0,0,0,.3); border-top-color: var(--ink);
+  border-radius: 50%; animation: spin .6s linear infinite;
+}
+.btn-submit.loading .btn-text { opacity: .5; }
+
+/* ── RIGHT COLUMN ────────────────────────────────────────────────────── */
+.right-col { display: flex; flex-direction: column; gap: 20px; }
+
+/* ── RESULT CARD ─────────────────────────────────────────────────────── */
+.result-card {
+  background: var(--ink2); border: 1px solid var(--wire);
+  border-radius: var(--r2); overflow: hidden;
+  animation: fadeUp .7s .1s ease both;
+}
+.result-placeholder {
+  padding: 40px 24px; text-align: center;
+  color: var(--mist); font-size: 13px;
+}
+.result-placeholder .big-icon { font-size: 40px; margin-bottom: 12px; display: block; opacity: .4; }
+
+/* RESULT: low risk */
+.result-low { border-color: rgba(52,211,153,.3); }
+.result-low .result-banner { background: linear-gradient(135deg, rgba(52,211,153,.12), rgba(13,148,136,.08)); border-bottom: 1px solid rgba(52,211,153,.2); }
+.result-low .result-pct { color: var(--emerald); }
+.result-low .risk-badge { background: rgba(52,211,153,.15); color: var(--emerald); border: 1px solid rgba(52,211,153,.3); }
+.result-low .bar-fill { background: linear-gradient(90deg, var(--emerald), var(--teal)); }
+
+/* RESULT: high risk */
+.result-high { border-color: rgba(248,113,113,.3); }
+.result-high .result-banner { background: linear-gradient(135deg, rgba(248,113,113,.12), rgba(153,27,27,.08)); border-bottom: 1px solid rgba(248,113,113,.2); }
+.result-high .result-pct { color: var(--coral); }
+.result-high .risk-badge { background: rgba(248,113,113,.15); color: var(--coral); border: 1px solid rgba(248,113,113,.3); }
+.result-high .bar-fill { background: linear-gradient(90deg, var(--amber), var(--coral)); }
+
+.result-banner { padding: 28px 24px; text-align: center; }
+.result-icon-big { font-size: 48px; display: block; margin-bottom: 10px; }
+.result-label { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--snow); margin-bottom: 6px; }
+.result-pct { font-family: 'JetBrains Mono', monospace; font-size: 52px; font-weight: 500; line-height: 1; display: block; }
+.result-sub { font-size: 12px; color: var(--mist); margin-top: 6px; }
+.risk-badge { display: inline-block; margin-top: 12px; padding: 4px 14px; border-radius: 40px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+
+.bar-wrap { padding: 0 24px 4px; }
+.bar-track { height: 6px; background: var(--ink3); border-radius: 3px; overflow: hidden; }
+.bar-fill { height: 100%; border-radius: 3px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+
+.result-stats {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 1px; background: var(--wire);
+  border-top: 1px solid var(--wire);
+}
+.stat { background: var(--ink2); padding: 14px 16px; }
+.stat-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--mist); margin-bottom: 4px; }
+.stat-val { font-family: 'JetBrains Mono', monospace; font-size: 14px; color: var(--snow); font-weight: 500; }
+
+.result-conseil { padding: 16px 20px; border-top: 1px solid var(--wire); font-size: 12px; line-height: 1.6; color: var(--mist); }
+.result-conseil strong { color: var(--amber); }
+.result-disc { padding: 10px 20px 16px; font-size: 10px; color: var(--wire); border-top: 1px solid var(--ink3); font-style: italic; }
+
+/* ── MODEL INFO CARD ─────────────────────────────────────────────────── */
+.info-card {
+  background: var(--ink2); border: 1px solid var(--wire);
+  border-radius: var(--r2); padding: 20px 22px;
+  animation: fadeUp .7s .2s ease both;
+}
+.info-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px; color: var(--mist); margin-bottom: 16px; font-weight: 600; }
+.info-rows { display: flex; flex-direction: column; gap: 10px; }
+.info-row { display: flex; justify-content: space-between; align-items: center; }
+.info-key { font-size: 12px; color: var(--mist); }
+.info-val { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--snow); }
+.info-val.g { color: var(--emerald); }
+.info-val.t { color: var(--teal); }
+.info-val.a { color: var(--amber); }
+
+/* ── ANIMATIONS ──────────────────────────────────────────────────────── */
+@keyframes fadeDown { from { opacity:0; transform: translateY(-16px); } to { opacity:1; transform: none; } }
+@keyframes fadeUp   { from { opacity:0; transform: translateY(16px);  } to { opacity:1; transform: none; } }
+@keyframes spin     { to { transform: rotate(360deg); } }
+@keyframes pulse-in { 0% { transform: scale(.92); opacity:0; } 60% { transform: scale(1.02); } 100% { transform: scale(1); opacity:1; } }
+
+.result-animate { animation: pulse-in .5s cubic-bezier(.4,0,.2,1) both; }
+
+/* ── RESPONSIVE ──────────────────────────────────────────────────────── */
+@media (max-width: 760px) {
+  .main-grid { grid-template-columns: 1fr; }
+  .right-col { order: -1; }
+  .header { flex-direction: column; gap: 16px; }
+  .model-chips { justify-content: flex-start; }
+  .fields-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+
+  <!-- ── HEADER ── -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo-mark">🩺</div>
+      <div>
+        <h1 class="header-title">Diab<em>IA</em></h1>
+        <p class="header-sub">Systeme d'analyse du risque diabetique</p>
+      </div>
+    </div>
+    <div class="model-chips">
+      <span class="chip"><span class="dot"></span>Modele : {{ config_name }}</span>
+      <span class="chip teal"><span class="dot"></span>Recall {{ recall }}</span>
+      <span class="chip amber"><span class="dot"></span>AUC {{ auc }}</span>
+      <span class="chip"><span class="dot" style="background:var(--coral)"></span>Seuil {{ seuil }}</span>
+    </div>
+  </header>
+
+  <!-- ── MAIN ── -->
+  <div class="main-grid">
+
+    <!-- LEFT: FORM -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-icon">📋</span>
+        <span class="panel-title">Indicateurs de sante du patient</span>
+      </div>
+      <div class="panel-body">
+
+        <div id="form-fields">
+          <!-- Champs generes par JS -->
+        </div>
+
+        <button class="btn-submit" onclick="submitForm()">
+          <span class="spinner"></span>
+          <span class="btn-text">🔬 &nbsp;Analyser le risque diabetique</span>
+        </button>
+
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+
+      <!-- Result -->
+      <div class="result-card" id="result-card">
+        <div class="result-placeholder" id="result-placeholder">
+          <span class="big-icon">🔬</span>
+          Remplissez les indicateurs<br>et cliquez sur Analyser
+        </div>
+        <div id="result-content" style="display:none"></div>
+      </div>
+
+      <!-- Model info -->
+      <div class="info-card">
+        <div class="info-title">Parametres du modele</div>
+        <div class="info-rows">
+          <div class="info-row"><span class="info-key">Architecture</span><span class="info-val t">MLP 3 couches</span></div>
+          <div class="info-row"><span class="info-key">Optimisation</span><span class="info-val">Focal Loss + class_weight</span></div>
+          <div class="info-row"><span class="info-key">Recall</span><span class="info-val g">{{ recall }}</span></div>
+          <div class="info-row"><span class="info-key">AUC-ROC</span><span class="info-val g">{{ auc }}</span></div>
+          <div class="info-row"><span class="info-key">Seuil decision</span><span class="info-val t">{{ seuil }}</span></div>
+          <div class="info-row"><span class="info-key">Normalisation</span><span class="info-val a">automatique</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ── DEFINITION DES FEATURES (valeurs REELLES, pas normalisees) ───────────────
+const FIELD_DEFS = [
+  // ── Antecedents cardiovasculaires
+  { section:"Antecedents cardiovasculaires" },
+  { key:"HighBP",               label:"Hypertension",             type:"toggle", options:["Non","Oui"],          hint:"tension artérielle" },
+  { key:"HighChol",             label:"Cholesterol eleve",         type:"toggle", options:["Non","Oui"],          hint:"hypercholestérolémie" },
+  { key:"CholCheck",            label:"Bilan chol. (5 ans)",        type:"toggle", options:["Non","Oui"],          hint:"dernier controle" },
+  { key:"Stroke",               label:"AVC",                       type:"toggle", options:["Non","Oui"],          hint:"accident vasculaire" },
+  { key:"HeartDiseaseorAttack", label:"Maladie cardiaque",          type:"toggle", options:["Non","Oui"],          hint:"infarctus / coronaropathie" },
+
+  // ── Mode de vie
+  { section:"Mode de vie" },
+  { key:"BMI",                  label:"IMC",                       type:"range",  min:10,  max:70,  step:0.5, dv:25,  hint:"kg/m²" },
+  { key:"PhysActivity",         label:"Activite physique",          type:"toggle", options:["Non","Oui"],          hint:"30min/j au moins" },
+  { key:"Fruits",               label:"Fruits quotidien",           type:"toggle", options:["Non","Oui"],          hint:"consommation journaliere" },
+  { key:"Veggies",              label:"Legumes quotidien",          type:"toggle", options:["Non","Oui"],          hint:"consommation journaliere" },
+  { key:"HvyAlcoholConsump",    label:"Alcool excessif",            type:"toggle", options:["Non","Oui"],          hint:">14 verres/sem (H), >7 (F)" },
+  { key:"Smoker",               label:"Fumeur",                    type:"toggle", options:["Non","Oui"],          hint:"100 cigarettes sur vie" },
+
+  // ── Acces aux soins
+  { section:"Acces aux soins" },
+  { key:"AnyHealthcare",        label:"Couverture sante",           type:"toggle", options:["Non","Oui"],          hint:"assurance maladie" },
+  { key:"NoDocbcCost",          label:"Renonce medecin (cout)",      type:"toggle", options:["Non","Oui"],          hint:"barriere financiere" },
+
+  // ── Etat de sante
+  { section:"Etat de sante" },
+  { key:"GenHlth",              label:"Sante generale",             type:"range",  min:1,   max:5,   step:1,   dv:3,   hint:"1=Excellente → 5=Mauvaise" },
+  { key:"MentHlth",             label:"Sante mentale",              type:"range",  min:0,   max:30,  step:1,   dv:0,   hint:"jours difficiles / mois" },
+  { key:"PhysHlth",             label:"Sante physique",             type:"range",  min:0,   max:30,  step:1,   dv:0,   hint:"jours difficiles / mois" },
+  { key:"DiffWalk",             label:"Difficulte marcher",         type:"toggle", options:["Non","Oui"],          hint:"monter escaliers" },
+
+  // ── Profil demographique
+  { section:"Profil demographique" },
+  { key:"Sex",                  label:"Sexe",                      type:"toggle", options:["Femme","Homme"],      hint:"0=Femme, 1=Homme" },
+  { key:"Age",                  label:"Tranche d'age",             type:"range",  min:1,   max:13,  step:1,   dv:6,   hint:"1=18-24  6=45-49  13=80+" },
+  { key:"Education",            label:"Niveau d'education",        type:"range",  min:1,   max:6,   step:1,   dv:4,   hint:"1=Aucun  6=Superieur" },
+  { key:"Income",               label:"Revenu annuel",             type:"range",  min:1,   max:8,   step:1,   dv:5,   hint:"1=<10k$  5=35-50k$  8=>75k$" },
+];
+
+const FEATURES = {{feature_names|tojson}};
+
+// Valeurs en memoire
+const VALUES = {};
+
+// ── CONSTRUCTION DU FORMULAIRE ───────────────────────────────────────────────
+function buildForm() {
+  const container = document.getElementById('form-fields');
+  let currentSection = null;
+  let sectionDiv = null;
+  let gridDiv = null;
+
+  FIELD_DEFS.forEach(def => {
+    if (def.section) {
+      currentSection = def.section;
+      const sl = document.createElement('div');
+      sl.className = 'section-label';
+      sl.textContent = def.section;
+      container.appendChild(sl);
+      gridDiv = document.createElement('div');
+      gridDiv.className = 'fields-grid';
+      container.appendChild(gridDiv);
+      return;
+    }
+
+    if (!FEATURES.includes(def.key)) return;
+
+    const field = document.createElement('div');
+    field.className = 'field';
+
+    if (def.type === 'toggle') {
+      VALUES[def.key] = 0;
+      field.innerHTML = `
+        <label>${def.label} <span class="hint">${def.hint}</span></label>
+        <div class="toggle-wrap" id="tg_${def.key}">
+          ${def.options.map((o,i) =>
+            `<button type="button" class="toggle-btn ${i===0?'active':''}"
+              onclick="setToggle('${def.key}', ${i}, this)">${o}</button>`
+          ).join('')}
+        </div>`;
+    } else {
+      VALUES[def.key] = def.dv;
+      field.innerHTML = `
+        <label>${def.label} <span class="hint">${def.hint}</span></label>
+        <div class="slider-wrap">
+          <input type="range" id="sl_${def.key}"
+            min="${def.min}" max="${def.max}" step="${def.step}" value="${def.dv}"
+            oninput="setSlider('${def.key}', this.value)">
+          <span class="slider-val" id="sv_${def.key}">${def.dv}</span>
+        </div>`;
+    }
+
+    if (gridDiv) gridDiv.appendChild(field);
+    else container.appendChild(field);
+  });
+}
+
+function setToggle(key, val, btn) {
+  VALUES[key] = val;
+  const wrap = document.getElementById('tg_' + key);
+  wrap.querySelectorAll('.toggle-btn').forEach((b,i) => {
+    b.classList.toggle('active', i === val);
+  });
+}
+
+function setSlider(key, val) {
+  VALUES[key] = parseFloat(val);
+  document.getElementById('sv_' + key).textContent = val;
+}
+
+// ── SOUMISSION ────────────────────────────────────────────────────────────────
+async function submitForm() {
+  const btn = document.querySelector('.btn-submit');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  // Construire le payload avec les valeurs reelles
+  const payload = {};
+  FEATURES.forEach(f => { payload[f] = VALUES[f] !== undefined ? VALUES[f] : 0; });
+
+  try {
+    const res  = await fetch('/predict', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+    showResult(data);
+  } catch(err) {
+    showError(err.message);
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+}
+
+// ── AFFICHAGE DU RESULTAT ─────────────────────────────────────────────────────
+function showResult(d) {
+  const isHigh  = d.prediction === 1;
+  const pct     = d.percent;
+  const barPct  = Math.min(pct, 100);
+  const cls     = isHigh ? 'high' : 'low';
+  const icon    = isHigh ? '⚠️' : '✅';
+  const conseil = isHigh
+    ? 'Consultez un medecin <strong>rapidement</strong> pour un bilan glycemique complet : glycemie a jeun, HbA1c.'
+    : 'Profil rassurant. Maintenez une <strong>alimentation equilibree</strong> et une activite physique reguliere.';
+
+  const card = document.getElementById('result-card');
+  card.className = `result-card result-${cls}`;
+
+  document.getElementById('result-placeholder').style.display = 'none';
+  const content = document.getElementById('result-content');
+  content.style.display = 'block';
+  content.innerHTML = `
+    <div class="result-animate">
+      <div class="result-banner">
+        <span class="result-icon-big">${icon}</span>
+        <div class="result-label">${d.label}</div>
+        <span class="result-pct">${pct}%</span>
+        <div class="result-sub">probabilite de diabete</div>
+        <span class="risk-badge">Risque ${d.risque}</span>
+      </div>
+      <div class="bar-wrap">
+        <div class="bar-track">
+          <div class="bar-fill" id="bar-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="result-stats">
+        <div class="stat"><div class="stat-label">Probabilite brute</div><div class="stat-val">${d.probability}</div></div>
+        <div class="stat"><div class="stat-label">Seuil decision</div><div class="stat-val">${d.seuil}</div></div>
+        <div class="stat"><div class="stat-label">Decision</div><div class="stat-val">${d.label}</div></div>
+        <div class="stat"><div class="stat-label">Niveau</div><div class="stat-val">${d.risque.toUpperCase()}</div></div>
+      </div>
+      
+    </div>`;
+
+  // Barre animee
+  setTimeout(() => {
+    const fill = document.getElementById('bar-fill');
+    if (fill) fill.style.width = barPct + '%';
+  }, 80);
+}
+
+function showError(msg) {
+  const content = document.getElementById('result-content');
+  document.getElementById('result-placeholder').style.display = 'none';
+  content.style.display = 'block';
+  content.innerHTML = `<div style="padding:24px;color:#f87171;font-size:13px">
+    <strong>Erreur :</strong> ${msg}</div>`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+buildForm();
+</script>
+</body>
+</html>
