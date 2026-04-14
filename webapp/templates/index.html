@@ -496,8 +496,9 @@ async function submitForm() {
 // ── AFFICHAGE DU RESULTAT ─────────────────────────────────────────────────────
 function showResult(d) {
   const isHigh  = d.prediction === 1;
-  const pct     = d.percent;
-  const barPct  = Math.min(pct, 100);
+  const probRaw = Number(d.probability);
+  const pct     = Number.isFinite(probRaw) ? (probRaw * 100).toFixed(1) : '0.0';
+  const barPct  = Math.min(Number(pct), 100);
   const cls     = isHigh ? 'high' : 'low';
   const icon    = isHigh ? '⚠️' : '✅';
   const conseil = isHigh
