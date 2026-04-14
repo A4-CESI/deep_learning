@@ -3,8 +3,10 @@ import numpy as np
 from flask import Flask, request, jsonify, render_template
 from tensorflow import keras
 import tensorflow as tf
+from pathlib import Path
 
 app = Flask(__name__)
+BASE_DIR = Path(__file__).resolve().parent
 
 def _fl(y_true, y_pred):
     y_pred = tf.clip_by_value(y_pred, 1e-7, 1-1e-7)
@@ -12,9 +14,14 @@ def _fl(y_true, y_pred):
     p_t    = y_true*y_pred+(1-y_true)*(1-y_pred)
     return tf.reduce_mean(0.75*tf.pow(1-p_t,2.0)*bce)
 
-model  = keras.models.load_model("model_production.keras", custom_objects={"loss":_fl})
-with open("scaler_production.pkl","rb") as f: scaler = pickle.load(f)
-with open("config_production.json") as f: cfg = json.load(f)
+model = keras.models.load_model(
+    str(BASE_DIR / "model_production.keras"),
+    custom_objects={"loss": _fl},
+)
+with (BASE_DIR / "scaler_production.pkl").open("rb") as f:
+    scaler = pickle.load(f)
+with (BASE_DIR / "config_production.json").open() as f:
+    cfg = json.load(f)
 FEATURES=cfg["feature_names"]; SEUIL=cfg["seuil"]
 RECALL=cfg["recall"]; AUC=cfg["auc"]; CFG_NAME=cfg["config"]
 
@@ -32,18 +39,9 @@ def predict():
         arr_sc = scaler.transform([values])
         prob   = float(model.predict(arr_sc, verbose=0).flatten()[0])
         pred   = int(prob >= SEUIL)
-
-        percent = round(prob * 100, 2)  # 🔥 AJOUT IMPORTANT
-
-        return jsonify({
-            "probability": round(prob,4),
-            "percent": percent,  # ✅ AJOUT ICI
-            "prediction": pred,
-            "label": "Diabetique" if pred==1 else "Non-diabetique",
-            "seuil": round(SEUIL,3),
-            "risque": "eleve" if pred==1 else "faible"
-        })
-
+        return jsonify({"probability":round(prob,4),"prediction":pred,
+            "label":"Diabetique" if pred==1 else "Non-diabetique",
+            "seuil":round(SEUIL,3),"risque":"eleve" if pred==1 else "faible"})
     except Exception as e:
         return jsonify({"error":str(e)}), 400
 
