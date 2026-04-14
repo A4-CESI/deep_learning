@@ -16,8 +16,8 @@
     "HvyAlcoholConsump",
     "MentHlth"
   ],
-  "seuil": 0.3456557095050812,
-  "config": "Config F_large_LR",
-  "recall": 0.8077273763391839,
-  "auc": 0.8078821752423871
+  "seuil": 0.32000000000000006,
+  "config": "Config A_baseline",
+  "recall": 0.8710964212445863,
+  "auc": 0.8134757239168292
 }

@@ -32,9 +32,18 @@ def predict():
         arr_sc = scaler.transform([values])
         prob   = float(model.predict(arr_sc, verbose=0).flatten()[0])
         pred   = int(prob >= SEUIL)
-        return jsonify({"probability":round(prob,4),"prediction":pred,
-            "label":"Diabetique" if pred==1 else "Non-diabetique",
-            "seuil":round(SEUIL,3),"risque":"eleve" if pred==1 else "faible"})
+
+        percent = round(prob * 100, 2)  # 🔥 AJOUT IMPORTANT
+
+        return jsonify({
+            "probability": round(prob,4),
+            "percent": percent,  # ✅ AJOUT ICI
+            "prediction": pred,
+            "label": "Diabetique" if pred==1 else "Non-diabetique",
+            "seuil": round(SEUIL,3),
+            "risque": "eleve" if pred==1 else "faible"
+        })
+
     except Exception as e:
         return jsonify({"error":str(e)}), 400
 
