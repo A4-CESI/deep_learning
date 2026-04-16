@@ -16,8 +16,8 @@
     "HvyAlcoholConsump",
     "MentHlth"
   ],
-  "seuil": 0.31000000000000005,
-  "config": "Config E_dropout",
-  "recall": 0.8701846364258035,
-  "auc": 0.8122912984098671
+  "seuil": 0.30000000000000004,
+  "config": "Config B_petit batch",
+  "recall": 0.8863688169591977,
+  "auc": 0.8034545612026177
 }
