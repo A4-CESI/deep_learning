@@ -1,0 +1,23 @@
+{
+  "feature_names": [
+    "GenHlth",
+    "HighBP",
+    "DiffWalk",
+    "BMI",
+    "HighChol",
+    "Age",
+    "HeartDiseaseorAttack",
+    "PhysHlth",
+    "Income",
+    "PhysActivity",
+    "Education",
+    "Stroke",
+    "CholCheck",
+    "HvyAlcoholConsump",
+    "MentHlth"
+  ],
+  "seuil": 0.31000000000000005,
+  "config": "Config B_petit batch",
+  "recall": 0.8695007978117164,
+  "auc": 0.8053877884675169
+}
